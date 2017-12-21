@@ -2,3 +2,17 @@ sk8s-ops:
   OPS_REPO_SLUG: OriHoch/sk8s
   OPS_REPO_BRANCH: master
   secret: ops
+
+adminer:
+  enabled: true
+
+nginx:
+  enabled: true
+  htpasswdSecretName: nginx-htpasswd
+  enableAdminer: true
+
+traefik:
+  enabled: true
+  acmeEmail: ori@uumpa.com
+  rootDomain: sk8s-staging.uumpa.com
+  enableNginx: true
