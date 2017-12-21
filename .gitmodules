@@ -1,0 +1,3 @@
+[submodule "charts/sk8s-ops"]
+	path = charts/sk8s-ops
+	url = git@github.com:OriHoch/sk8s-ops.git
