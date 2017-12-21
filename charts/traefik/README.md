@@ -5,6 +5,19 @@ we use [traefik](https://traefik.io/) as the main app entrypoint
 It provides app load balancing and automatic SSL using Let's encrypt.
 
 
+## Enabling SSL
+
+For a basic single domain configuration, you can use the provided traefik-etc configuration
+
+You just need to set:
+
+```
+traefik:
+  acmeEmail: <EMAIL_FOR_CERTIFICATE_REGISTRATION>
+  rootDomain: <DOMAIN_TO_GENERATE_AND_RENEW_CERTIFICATES_FOR>
+```
+
+
 ## Shared Host for Let's encrypt
 
 We use a shared host path for let's encrypt certificates and renewals
