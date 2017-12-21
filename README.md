@@ -155,6 +155,12 @@ After GitHub was updated, patch the deployment, for example, in case of image up
 kubectl set image deployment/spark spark=${IMAGE_TAG}
 ```
 
+You can use the following to set the token on travis:
+
+```
+travis env set --private K8S_OPS_GITHUB_REPO_TOKEN "*****"
+```
+
 
 ## Continuous Deployment
 
@@ -184,74 +190,7 @@ Copy the `openssl` command output by the above command and modify in the .travis
 
 The -out param should be `-out k8s-ops-secret.json`
 
-Create a GitHub machine user according to [these instructions](https://developer.github.com/v3/guides/managing-deploy-keys/#machine-users) and give this user write permissions to the k8s repo.
-
-Add the GitHub machine user secret key to travis on the app's repo:
-
-```
-travis env set --private K8S_OPS_GITHUB_REPO_TOKEN "*****"
-```
-
-Commit the .travis.yml changes and the encrypted file.
-
-
-## Exposing services
-
-Main entrypoint is a [traefik](https://traefik.io/) service, exposed via a load balancer.
-
-Traefik provides application load balancing with path/host-based rules. HTTPS is provided seamlessly using Let's encrypt.
-
-In addition to traefik, the nginx pod can optionally be used on specific service for more advanced use-cases such as auth or caching.
-
-
-## Static IP for the load balancer
-
-Reserve a static IP:
-
-```
-gcloud compute addresses create midburn-ENVIRONMENT_NAME-traefik --region=us-central1
-```
-
-Get the static IP address:
-
-```
-gcloud compute addresses describe midburn-ENVIRONMENT_NAME-traefik --region=us-central1 | grep ^address:
-```
-
-Update in `values.ENVIRONMENT_NAME.yaml`:
-
-```
-traefik:
-  loadBalancerIP: <THE_STATIC_IP>
-```
-
-
-## Http authentication
-
-HTTP authentication is provided using nginx.
-
-You should configure a traefik backend that points to the nginx pod on a specific port number, then update `nginx-conf.yaml` to handle that port number with http auth enabled.
-
-To add a user to the htpasswd file:
-
-```
-htpasswd ./secret-nginx-htpasswd superadmin
-```
-
-(use `-c` if you are just creating the file)
-
-set the file as a secret on k8s:
-
-```
-kubectl create secret generic nginx-htpasswd --from-file=./secret-nginx-htpasswd
-```
-
-Update the value in `values.ENVIRONMENT_NAME.yaml`:
-
-```
-nginx:
-  htpasswdSecretName: nginx-htpasswd
-```
+Check other sk8s apps for more deployment example, here is a continuous deployment which patches the deployment with help_update_values: https://github.com/OriHoch/sk8s-ops/blob/master/.travis.yml
 
 
 ## Authorize with GitHub to push changes

@@ -7,10 +7,10 @@ Each sub-directory corresponds to an environment.
 
 Each environment should have the following files:
 
-- `environments/ENVIRONMENT_NAME/.env` *(required)*: the basic environment connection details
-- `environments/ENVIRONMENT_NAME/values.yaml` *(optional)*: override default helm chart values for this environment
-- `environments/ENVIRONMENT_NAME/values.auto-updated.yaml` *(optional)*: override environment values from automatically updated actions (e.g. continuous deployment)
-- `environments/ENVIRONMENT_NAME/secrets.sh` *(optional)* create the secrets for this environment, shouldn't be committed to Git.
+- `environments/ENVIRONMENT_NAME/.env`: the basic environment connection details
+- `environments/ENVIRONMENT_NAME/values.yaml`: override default helm chart values for this environment
+- `environments/ENVIRONMENT_NAME/values.auto-updated.yaml`: override environment values from automatically updated actions (e.g. continuous deployment)
+- `environments/ENVIRONMENT_NAME/secrets.sh`: create the secrets for this environment, shouldn't be committed to Git.
 
 You can copy from `staging` environment and modify. For a new cluster you should delete the K8S_ENVIRONMENT_CONTEXT variable - it will be added automatically.
 
