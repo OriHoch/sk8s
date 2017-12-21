@@ -1,45 +1,5 @@
 #!/usr/bin/env bash
 
-#
-# This script can be used to update Helm configuration values for specific environments
-#
-# This method works under the following conditions:
-#
-#   * You want to make changes to a main / shared environment (e.g. production / staging) - otherwise, just do a helm upgrade.
-#   * You want to modify a specific value in a specific resource (usually a deployment image, but other values are possible too)
-#   * This value is represented in the Helm configuration values
-#
-# This script accepts a single required argument - a json string containing the required update
-#
-# It updates the values in the current environment's auto updated values file - environments/ENVIRONMENT_NAME/values.auto-updated.yaml
-#
-# for example, the following command will update the image value under the spark key.
-#
-# ./helm_update_values.sh '{"spark":{"image":"'${IMAGE_TAG}'"}}'
-#
-# Json values require quotes which may interfere with bash scripts, so you can provide it base64 encoded
-#
-# B64_UPDATE_VALUES=`echo '{"spark":{"image":"'${IMAGE_TAG}'"}}' | base64 -w0`
-# ./helm_update_values.sh $B64_UPDATE_VALUES
-#
-# After ther values were updated, they should be pushed to GitHub
-#
-# It's important to commit the changes to Git **first** and only then patch the deployment - this prevents infrastrcuture conflicts.
-#
-# This script also supports updating Git from CI tools
-#
-# Create a [GitHub machine user](https://developer.github.com/v3/guides/managing-deploy-keys/#machine-users) and give this user write permissions to the k8s repo.
-#
-# Run the script with the full parameters:
-#
-# ./helm_update_values.sh <YAML_OVERRIDE_VALUES_JSON> [GIT_COMMIT_MESSAGE] [GIT_REPO_TOKEN] [GIT_REPO_SLUG] [GIT_REPO_BRANCH]
-#
-# Where GIT_REPO_TOKEN is the machine user's token
-#
-# After GitHub was updated, patch the deployment, for example, in case of image update:
-#
-# kubectl set image deployment/spark spark=${IMAGE_TAG}
-
 source connect.sh
 
 if [ "${1}" == "" ]; then
