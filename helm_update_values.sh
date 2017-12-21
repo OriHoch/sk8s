@@ -21,6 +21,12 @@ fi
 
 echo "Updating values for ${K8S_ENVIRONMENT_NAME} environment: ${YAML_OVERRIDE_VALUES_JSON}"
 
+if [ -f "environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml" ]; then
+    NEW_AUTO_UPDATE_VALUES_FILE="0"
+else
+    NEW_AUTO_UPDATE_VALUES_FILE="1"
+fi
+
 ! ./update_yaml.py "${YAML_OVERRIDE_VALUES_JSON}" "environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml" &&\
     echo "Failed to update environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml" && exit 1
 
@@ -36,7 +42,13 @@ if [ "${GIT_COMMIT_MESSAGE}" != "" ] && [ "${GIT_REPO_TOKEN}" != "" ] && [ "${GI
     ! git clone --depth 1 --branch "${GIT_REPO_BRANCH}" "https://github.com/${GIT_REPO_SLUG}.git" "${TEMPDIR}" \
       && echo "failed git clone" && exit 1
 
-    if ! git diff --shortstat --exit-code "environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml"; then
+    DO_COMMIT="0"
+    if [ "${NEW_AUTO_UPDATE_VALUES_FILE}" == "1" ]; then
+        DO_COMMIT="1"
+    elif ! git diff --shortstat --exit-code "environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml"; then
+        DO_COMMIT="1"
+    fi
+    if [ "${DO_COMMIT}" == "1" ]; then
         echo "Committing and pushing changes in environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml"
         ! (
             git add "environments/${K8S_ENVIRONMENT_NAME}/values.auto-updated.yaml" &&\
@@ -46,6 +58,7 @@ if [ "${GIT_COMMIT_MESSAGE}" != "" ] && [ "${GIT_REPO_TOKEN}" != "" ] && [ "${GI
     else
         echo "No changes, skipping commit / push"
     fi
+
     rm -rf "${TEMPDIR}"
 fi
 
