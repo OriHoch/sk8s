@@ -1,6 +1,5 @@
-ops:
+sk8s-ops:
   enabled: true
-  image: orihoch/sk8s@sha256:5660a773e64b6ec495f4f5f62211bd85ceb3452e9372f8a7a270c112804b03f3
 
 global:
   defaultNodePool: default-pool

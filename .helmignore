@@ -4,3 +4,4 @@
 secret*
 environments
 .env
+*.md

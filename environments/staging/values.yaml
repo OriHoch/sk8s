@@ -1,0 +1,4 @@
+sk8s-ops:
+  OPS_REPO_SLUG: OriHoch/sk8s
+  OPS_REPO_BRANCH: master
+  secret: ops

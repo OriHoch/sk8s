@@ -1,3 +1,8 @@
+# Environments
+
+Each sub-directory corresponds to an environment.
+
+
 ## Create a new environment
 
 Each environment should have the following files:
@@ -33,10 +38,11 @@ Once the cluster is running, connect to the environment:
 source switch_environment.sh ENVIRONMENT_NAME
 ```
 
-Install the Helm server-side component
+Install helm and tiller
 
 ```
-helm init
+kubectl create -f rbac-config.yaml
+helm init --service-account tiller
 ```
 
 

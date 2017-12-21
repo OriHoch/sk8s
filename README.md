@@ -15,7 +15,7 @@ You can interact with the Kubernetes environment in the following ways -
 * GitHub - commits to master branch are continuously deployed to the relevant environment. See .travis.yaml for the continuous deployment configuration and deployed environments.
 * [Google Cloud Shell](https://cloud.google.com/shell/docs/quickstart) - The recommended and easiest way for running management commands. Just setup a Google Cloud account and enable billing (you get 300$ free, you can setup billing alerts to avoid paying by mistake). You can use the cloud shell file editor to edit files, just be sure to configure it to indentation of 2 spaces (not tabs - because they interfere with the yaml files).
 * Any modern PC / OS should also work, you will just need to install some basic dependencies like Docker and Google Cloud SDK (possibly more). The main problem with working from local PC is the network connection, if you have a stable, fast connection and know how to install the dependencies, you might be better of running from your own PC.
-* Docker + Google Cloud service account - for automation / CI / CD. See the Docker Ops section below for more details.
+* Docker + Google Cloud service account - for automation / CI / CD. See the sk8s-ops sub-chart for more details.
 
 Ensure you have permissions on the relevant Google Project. Permissions are personal, so once you authenticate with your google account, you will have all permissions granted for you by the different Google Cloud projects.
 
@@ -23,16 +23,16 @@ To interact with the environment locally, install [Google Cloud SDK](https://clo
 
 On Google Cloud Shell you are already authenticated and all dependencies are installed.
 
-Clone the relevant k8s repo (e.g. https://github.com/Midburn/midburn-k8s.git)
+Clone the relevant repo
 
 ```
-git clone https://github.com/<REPO_SLUG>.git
+git clone <K8S_REPO_URL>
 ```
 
-All following commands should run from the k8s repo root directory (e.g. `cd midburn-k8s`)
+All following commands should run from the k8s repo root directory
 
 ```
-cd <K8S_REPO_DIRECTORY>
+cd <CLONED_K8S_REPO_DIRECTORY>
 ```
 
 
@@ -99,33 +99,66 @@ Finally, automation scripts write values to `environments/ENVIRONMENT_NAME/value
 
 ## Secrets
 
-Secrets are stored and managed directly in kubernetes and are not managed via Helm.
-
-To update an existing secret, delete it first `kubectl delete secret SECRET_NAME`
-
 After updating a secret you should update the affected deployments, you can use `./force_update.sh` to do that
 
-All secrets shoule be optional so you can run the environment without any secretes and will use default values similar to dev environments.
+Secrets shoule be optional so you can run the environment without any secretes and will use default values similar to dev environments.
 
 Each environment may include a script to create the environment secrets under `environments/ENVIRONMENT_NAME/secrets.sh` - this file is not committed to Git.
 
-You can use the following snippet in the secrets.sh script to check if secret exists before creating it:
+
+## Patching configuration values using helm_update_values.sh script
+
+The helm_update_values.sh script can be used to update Helm configuration values, usually from automation / CI scripts.
+
+This method works under the following conditions:
+
+* You want to make changes to a main / shared environment, otherwise, just do a helm upgrade.
+* You want to modify a specific value in a specific resource (usually a deployment image, but other values are possible too)
+* This value is represented in the Helm configuration values
+
+This script accepts a single required argument - a json string containing the required update
+
+It updates the values in the current environment's auto updated values file - environments/ENVIRONMENT_NAME/values.auto-updated.yaml
+
+for example, the following command will update the image value under the spark key.
 
 ```
-! kubectl describe secret <SECRET_NAME> &&\
-  kubectl create secret generic <SECRET_NAME> <CREATE_SECRET_PARAMS>
+./helm_update_values.sh '{"spark":{"image":"'${IMAGE_TAG}'"}}'
 ```
 
+Json values require quotes which may interfere with bash scripts, so you can provide it base64 encoded
 
+```
+B64_UPDATE_VALUES=`echo '{"spark":{"image":"'${IMAGE_TAG}'"}}' | base64 -w0`
+./helm_update_values.sh $B64_UPDATE_VALUES
+```
 
+After ther values were updated, they should be pushed to GitHub
 
+It's important to commit the changes to Git **first** and only then patch the deployment - this prevents infrastrcuture conflicts.
 
+This script also supports updating Git from CI tools
 
+Create a [GitHub machine user](https://developer.github.com/v3/guides/managing-deploy-keys/#machine-users) and give this user write permissions to the k8s repo.
+
+Run the script with the full parameters:
+
+```
+./helm_update_values.sh <YAML_OVERRIDE_VALUES_JSON> [GIT_COMMIT_MESSAGE] [GIT_REPO_TOKEN] [GIT_REPO_SLUG] [GIT_REPO_BRANCH]
+```
+
+Where GIT_REPO_TOKEN is the machine user's token
+
+After GitHub was updated, patch the deployment, for example, in case of image update:
+
+```
+kubectl set image deployment/spark spark=${IMAGE_TAG}
+```
 
 
 ## Continuous Deployment
 
-Each app / module is self-deploying using the above method for patching configurations
+External services / apps can be self-deploying using the above method for patching configurations
 
 The continuous deployment flow is based on:
 
@@ -133,27 +166,25 @@ The continuous deployment flow is based on:
 * Ops Docker (see above) - provides a consistent deployment environment and to securely authenticate with the service account secret.
 * GitHub - for persistency of deployment environment values - GitHub maintains the state of the environment. Each app commits deployment updates to the k8s repo.
 
-We use [Travis CLI](https://github.com/travis-ci/travis.rb#installation) below but you can also do the setup from the UI.
+Install the [Travis CLI](https://github.com/travis-ci/travis.rb#installation)
 
-Enable Travis for the repo (run `travis enable` from the repo directory)
+Enable Travis for the external repo (run `travis enable` from the repo directory)
 
 Copy `.travis.yml` from this repo to the app repo and modify the values / script according to your app requirements
 
 Set the k8s ops service account secret on the app's travis
 
-This command should run from the root of the external app, assuming the midburn-k8s repo is a sibling directory:
+assuming you have the secret-k8s-ops.json file available at the external app's root directory
 
 ```
-travis encrypt-file ../midburn-k8s/secret-midburn-k8s-ops.json secret-midburn-k8s-ops.json.enc
+travis encrypt-file secret-k8s-ops.json secret-k8s-ops.json.enc
 ```
 
 Copy the `openssl` command output by the above command and modify in the .travis-yml
 
 The -out param should be `-out k8s-ops-secret.json`
 
-Create a GitHub machine user according to [these instructions](https://developer.github.com/v3/guides/managing-deploy-keys/#machine-users).
-
-Give this user write permissions to the k8s repo.
+Create a GitHub machine user according to [these instructions](https://developer.github.com/v3/guides/managing-deploy-keys/#machine-users) and give this user write permissions to the k8s repo.
 
 Add the GitHub machine user secret key to travis on the app's repo:
 
@@ -225,9 +256,7 @@ nginx:
 
 ## Authorize with GitHub to push changes
 
-Having infrastructure as code means you should be able to push any changes to infrastructure configuration back to GitHub.
-
-You can use the following procudure on both Google Cloud Shell and from local PC
+You can use the following procudure on both Google Cloud Shell and from local PC to enable pushing changes to GitHub
 
 Create an SSH key -
 
@@ -243,6 +272,3 @@ Clone the repo
 ```
 git clone git@github.com:midburn/midburn-k8s.git
 ```
-
-
-
