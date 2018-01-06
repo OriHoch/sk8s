@@ -176,7 +176,12 @@ Install the [Travis CLI](https://github.com/travis-ci/travis.rb#installation)
 
 Enable Travis for the external repo (run `travis enable` from the repo directory)
 
-Copy `.travis.yml` from this repo to the app repo and modify the values / script according to your app requirements
+Copy `travis.yml` and related scripts from sk8s repo, some examples:
+
+* https://github.com/Midburn/spark/blob/master/.travis.yml
+* https://github.com/Beit-Hatfutsot/mojp-dbs-pipelines/blob/master/.travis.yml
+
+Modify the values / script according to your app requirements
 
 Set the k8s ops service account secret on the app's travis
 

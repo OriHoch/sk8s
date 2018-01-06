@@ -1,4 +1,19 @@
 {{ if .Values.traefik.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+spec:
+  ports:
+  - {name: '80', port: 80}
+  - {name: '443', port: 443}
+  selector:
+    app: traefik
+  type: LoadBalancer
+  {{ if .Values.traefik.loadBalancerIP }}
+  loadBalancerIP: {{ .Values.traefik.loadBalancerIP | quote }}
+  {{ end }}
+---
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
@@ -31,8 +46,8 @@ spec:
 #        - |
 #          if ! [ -e /traefik-acme/acme.json ]; then
 #            source ~/.bashrc;
-#            gcloud config set project "bh-org-01"
-#            gsutil -m rsync -r `gsutil cat gs://mojp-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/latest` /traefik-acme
+#            gcloud config set project "{{ .Values.global.googleProjectId }}"
+#            gsutil -m rsync -r `gsutil cat gs://{{ .Values.global.projectName }}-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/latest` /traefik-acme
 #          fi
 #          chmod -R 600 /traefik-acme
 #          exit 0
@@ -64,23 +79,8 @@ spec:
       - name: traefik-acme
         hostPath:
           type: DirectoryOrCreate
-          path: /var/traefik-acme-{{ .Values.global.environmentName }}
+          path: /var/{{ .Values.global.projectName }}-traefik-acme-{{ .Values.global.environmentName }}
       - name: k8s-ops
         secret:
           secretName: ops
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik
-spec:
-  ports:
-  - {name: '80', port: 80}
-  - {name: '443', port: 443}
-  selector:
-    app: traefik
-  type: LoadBalancer
-  {{ if .Values.traefik.loadBalancerIP }}
-  loadBalancerIP: {{ .Values.traefik.loadBalancerIP | quote }}
-  {{ end }}
 {{ end }}

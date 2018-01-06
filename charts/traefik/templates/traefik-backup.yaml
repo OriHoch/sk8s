@@ -30,10 +30,10 @@ spec:
             - "-c"
             - >
               source ~/.bashrc;
-              gcloud config set project "bh-org-01" &&
-              echo "gs://mojp-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/`date +%Y-%m-%d-%H-%M`/" > /latest &&
+              gcloud config set project "{{ .Values.global.googleProjectId }}" &&
+              echo "gs://{{ .Values.global.projectName }}-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/`date +%Y-%m-%d-%H-%M`/" > /latest &&
               gsutil -m rsync -r /traefik-acme `cat /latest` &&
-              gsutil cp /latest gs://mojp-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/latest
+              gsutil cp /latest gs://{{ .Values.global.projectName }}-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/latest
             volumeMounts:
             - name: k8s-ops
               mountPath: /k8s-ops
@@ -47,6 +47,6 @@ spec:
           - name: traefik-acme
             hostPath:
               type: DirectoryOrCreate
-              path: /var/traefik-acme-{{ .Values.global.environmentName }}
+              path: /var/{{ .Values.global.projectName }}-traefik-acme-{{ .Values.global.environmentName }}
           restartPolicy: Never
 {{ end }}{{ end }}
