@@ -38,6 +38,12 @@ Once the cluster is running, connect to the environment:
 source switch_environment.sh ENVIRONMENT_NAME
 ```
 
+Create the namespace
+
+```
+kubectl create namespace NAMESPACE_NAME
+```
+
 Install helm and tiller
 
 ```
