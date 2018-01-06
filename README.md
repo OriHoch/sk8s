@@ -180,6 +180,8 @@ Copy `travis.yml` and related scripts from sk8s repo, some examples:
 
 * https://github.com/Midburn/spark/blob/master/.travis.yml
 * https://github.com/Beit-Hatfutsot/mojp-dbs-pipelines/blob/master/.travis.yml
+* https://github.com/Midburn/volunteers/blob/master/.travis.yml
+* https://github.com/Midburn/midburn-k8s/blob/master/.travis.yml
 
 Modify the values / script according to your app requirements
 
