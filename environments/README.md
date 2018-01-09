@@ -47,7 +47,7 @@ kubectl create namespace NAMESPACE_NAME
 Install helm and tiller
 
 ```
-kubectl create -f rbac-config.yaml
+kubectl create -f https://raw.githubusercontent.com/OriHoch/sk8s/master/rbac-config.yaml
 helm init --service-account tiller
 ```
 
