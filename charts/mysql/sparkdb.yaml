@@ -48,6 +48,4 @@ spec:
         - name: MYSQL_PASSWORD
           value: spark
         {{ end }}
-      nodeSelector:
-        cloud.google.com/gke-nodepool: {{ .Values.global.defaultNodePool | quote }}
 {{ end }}

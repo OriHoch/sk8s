@@ -1,0 +1,50 @@
+{{ if .Values.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ssh-socks-proxy
+spec:
+  selector:
+    app: ssh-socks-proxy
+  ports:
+  - name: "8123"
+    port: 8123
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: ssh-socks-proxy
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: ssh-socks-proxy
+    spec:
+      containers:
+      - name: ssh-socks-proxy
+        image: orihoch/ssh-socks-proxy@sha256:94faea572a5ff570d3dea92ca381909603e488c4162f36e56416648647ffd263
+        env:
+        - name: SSH_HOST
+          value: {{ .Values.ssh_host | quote }}
+        - name: SSH_PORT
+          value: {{ .Values.ssh_port | quote }}
+        - name: SOCKS_PORT
+          value: "8123"
+        - name: SSH_B64_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "ssh-socks-proxy"
+              key: "SSH_B64_KEY"
+        - name: SSH_B64_PUBKEY
+          valueFrom:
+            secretKeyRef:
+              name: "ssh-socks-proxy"
+              key: "SSH_B64_PUBKEY"
+        ports:
+        - containerPort: 8123
+        resources:
+          requests:
+            cpu: "0.001"
+            memory: "10Mi"
+{{ end }}
