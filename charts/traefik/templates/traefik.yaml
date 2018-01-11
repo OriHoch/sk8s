@@ -86,7 +86,7 @@ spec:
             echo "HISTORY_BACKUP=${HISTORY_BACKUP}"
             ! gsutil -m rsync -r /traefik-acme/ gs://${GS_BUCKET_NAME}/{{ .Values.global.environmentName }}/traefik-acme/latest/ \
               && echo "failed to sync latest backup" && exit 1
-            gsutil -m rsync -r /traefik-acme/ "${HISTORY_BACKUP}" \
+            ! gsutil -m rsync -r /traefik-acme/ "${HISTORY_BACKUP}" \
               && echo "failed to sync ${HISTORY_BACKUP}" && exit 1
             echo "sleeping for 1 day"
             sleep 86400
