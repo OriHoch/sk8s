@@ -36,28 +36,67 @@ spec:
       nodeSelector:
         cloud.google.com/gke-nodepool: {{ .Values.traefik.nodePool | quote }}
       {{ end }}
-#      initContainers:
-#      - name: ops
-#        image: orihoch/sk8sops:pipelines-gcs@sha256:a6e8f94c2e68fc8da552abcbdac865763d40e79895b87ff06a98ebd588070cf0
-#        resources: {"requests": {"cpu": "0.01", "memory": "100Mi"}}
-#        command:
-#        - bash
-#        - "-c"
-#        - |
-#          if ! [ -e /traefik-acme/acme.json ]; then
-#            source ~/.bashrc;
-#            gcloud config set project "{{ .Values.global.googleProjectId }}"
-#            gsutil -m rsync -r `gsutil cat gs://{{ .Values.global.projectName }}-k8s-backups/{{ .Values.global.environmentName }}/traefik-acme/latest` /traefik-acme
-#          fi
-#          chmod -R 600 /traefik-acme
-#          exit 0
-#        volumeMounts:
-#        - name: k8s-ops
-#          mountPath: /k8s-ops
-#          readOnly: true
-#        - name: traefik-acme
-#          mountPath: /traefik-acme
+      initContainers:
+      # initops container - copies the acme data from last backup before starting up the pod
+      - name: initops
+        image: orihoch/sk8sops:pipelines-gcs@sha256:c232fcbd4ffff456b9cb9312a4b7d62cec8c0fe6b36bf31e50625a618f129746
+        resources: {"requests": {"cpu": "1m", "memory": "2Mi"}}
+        env:
+        - name: CLOUDSDK_CORE_PROJECT
+          value: {{ .Values.global.cloudsdkCoreProject | quote }}
+        - name: GS_BUCKET_NAME
+          value: {{ .Values.global.backupsBucket | quote }}
+        command:
+        - bash
+        - "-c"
+        - |
+          source ~/.bashrc;
+          gcloud config set project "${CLOUDSDK_CORE_PROJECT}"
+          ! gsutil -m rsync -r "gs://${GS_BUCKET_NAME}/{{ .Values.global.environmentName }}/traefik-acme/latest/" /traefik-acme/ \
+            && echo "failed to get traefik acme details from backup, continuing anyway, traefik will create new certificates (hopefully..)"
+          chmod -R 600 /traefik-acme
+        volumeMounts:
+        - name: k8s-ops
+          mountPath: /k8s-ops
+          readOnly: true
+        - name: traefik-acme
+          mountPath: /traefik-acme
       containers:
+      - name: ops
+        image: orihoch/sk8sops:pipelines-gcs@sha256:c232fcbd4ffff456b9cb9312a4b7d62cec8c0fe6b36bf31e50625a618f129746
+        resources: {"requests": {"cpu": "1m", "memory": "2Mi"}}
+        env:
+        - name: CLOUDSDK_CORE_PROJECT
+          value: {{ .Values.global.cloudsdkCoreProject | quote }}
+        - name: GS_BUCKET_NAME
+          value: {{ .Values.global.backupsBucket | quote }}
+        command:
+        - bash
+        - "-c"
+        - |
+          source ~/.bashrc;
+          gcloud config set project "${CLOUDSDK_CORE_PROJECT}"
+          echo "sleeping for 4 minutes before making the first backup to allow traefik time to issue certificates"
+          sleep 240
+          echo "making daily backups"
+          LATEST_BACKUP="gs://${GS_BUCKET_NAME}/{{ .Values.global.environmentName }}/traefik-acme/latest/"
+          echo "LATEST_BACKUP=${LATEST_BACKUP}"
+          while true; do
+            HISTORY_BACKUP="gs://${GS_BUCKET_NAME}/{{ .Values.global.environmentName }}/traefik-acme/`date +%Y-%m-%d-%H-%M`/"
+            echo "HISTORY_BACKUP=${HISTORY_BACKUP}"
+            ! gsutil -m rsync -r /traefik-acme/ gs://${GS_BUCKET_NAME}/{{ .Values.global.environmentName }}/traefik-acme/latest/ \
+              && echo "failed to sync latest backup" && exit 1
+            gsutil -m rsync -r /traefik-acme/ "${HISTORY_BACKUP}" \
+              && echo "failed to sync ${HISTORY_BACKUP}" && exit 1
+            echo "sleeping for 1 day"
+            sleep 86400
+          done
+        volumeMounts:
+        - name: k8s-ops
+          mountPath: /k8s-ops
+          readOnly: true
+        - name: traefik-acme
+          mountPath: /traefik-acme
       - name: traefik
         image: traefik
         ports:
@@ -72,14 +111,24 @@ spec:
           mountPath: /traefik-acme
         args:
         - "--configFile=/etc-traefik/traefik.toml"
+        {{ .Values.traefik.CLOUDFLARE_EMAIL }}
+        # to use cloudflare for dns certificate challenge you should also set acme.dnsProvider = cloudflare
+        # see https://docs.traefik.io/configuration/acme/
+        env:
+        - name: CLOUDFLARE_EMAIL
+          value: {{ .Values.traefik.CLOUDFLARE_EMAIL | quote }}
+        - name: CLOUDFLARE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cloudflare
+              key: CLOUDFLARE_API_KEY
+        {{ end }}
       volumes:
       - name: etc-traefik
         configMap:
           name: etc-traefik
       - name: traefik-acme
-        hostPath:
-          type: DirectoryOrCreate
-          path: /var/{{ .Values.global.projectName }}-traefik-acme-{{ .Values.global.environmentName }}
+        emptyDir: {}
       - name: k8s-ops
         secret:
           secretName: ops

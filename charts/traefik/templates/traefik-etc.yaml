@@ -27,6 +27,9 @@ data:
     # let's encrypt automatic ssl certificate issue and renewal
     [acme]
       email = {{ .Values.acmeEmail | quote }}
+      {{ if .Values.traefik.dnsProvider }}
+      dnsProvider = {{ .Values.traefik.dnsProvider | quote }}
+      {{ end }}
       storage = "/traefic-acme/acme.json"
       entryPoint = "https"
       [[acme.domains]]

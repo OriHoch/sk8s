@@ -16,3 +16,7 @@ traefik:
   acmeEmail: ori@uumpa.com
   rootDomain: sk8s-staging.uumpa.com
   enableNginx: true
+
+global:
+  cloudsdkCoreProject: uumpa123
+  backupsBucket: uumpa-k8s-backups
