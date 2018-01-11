@@ -218,3 +218,8 @@ Clone the repo
 ```
 git clone git@github.com:midburn/midburn-k8s.git
 ```
+
+
+## Accessing internal cluster services
+
+see https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/
