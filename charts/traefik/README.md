@@ -60,3 +60,16 @@ Update in `environments/ENVIRONMENT_NAME/values.yaml`:
 traefik:
   loadBalancerIP: <THE_STATIC_IP>
 ```
+
+
+## Using DNS solver for SSL certificates
+
+By default an http solver is used to issue SSL certificates, this doesn't always work.
+
+To ensure you will always get and renew certificates you should change to a dns solver.
+
+You need to set the `dnsProvider` in `[acme]` section of `traefik.toml` and corresponding DNS provider keys
+
+See https://docs.traefik.io/configuration/acme/#dnsprovider
+
+If you dns provider is not supported, you can setup a free [Cloudflare](https://www.cloudflare.com/) account

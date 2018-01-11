@@ -10,7 +10,7 @@ https://cloud.google.com/kubernetes-engine/kubernetes-comic/
 
 ## Interacting with the environment
 
-You can interact with the Kubernetes environment in the following ways - 
+You can interact with the Kubernetes environment in the following ways -
 
 * GitHub - commits to master branch are continuously deployed to the relevant environment. See .travis.yaml for the continuous deployment configuration and deployed environments.
 * [Google Cloud Shell](https://cloud.google.com/shell/docs/quickstart) - The recommended and easiest way for running management commands. Just setup a Google Cloud account and enable billing (you get 300$ free, you can setup billing alerts to avoid paying by mistake). You can use the cloud shell file editor to edit files, just be sure to configure it to indentation of 2 spaces (not tabs - because they interfere with the yaml files).
@@ -63,7 +63,7 @@ When deploying to the main, shared environments (e.g. `staging` / `production`),
 
 If you still want to deploy directly, just make sure you are the only one working on the environment and/or update with the master branch to prevent infrastructure conflicts.
 
-Make sure you have the latest helm installed on both client and server: `helm init --upgrade`
+Make sure you have the latest helm installed on both client and server: `helm init --service-account tiller --upgrade`
 
 Deploy:
 
@@ -178,10 +178,10 @@ Enable Travis for the external repo (run `travis enable` from the repo directory
 
 Copy `travis.yml` and related scripts from sk8s repo, some examples:
 
-* https://github.com/Midburn/spark/blob/master/.travis.yml
+* Suitable for k8s repositories - it does deployment of charts and external sub-charts - https://github.com/Midburn/midburn-k8s/blob/master/.travis.yml
+* Suitable for external app repositories - it builds a docker image and updates image values - https://github.com/Midburn/spark/blob/master/.travis.yml
 * https://github.com/Beit-Hatfutsot/mojp-dbs-pipelines/blob/master/.travis.yml
 * https://github.com/Midburn/volunteers/blob/master/.travis.yml
-* https://github.com/Midburn/midburn-k8s/blob/master/.travis.yml
 
 Modify the values / script according to your app requirements
 
