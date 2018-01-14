@@ -1,4 +1,4 @@
-{{ if .Values.enabled }}
+{{ if .Values.nginx.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,7 +15,7 @@ kind: Deployment
 metadata:
   name: nginx
 spec:
-  replicas: {{.Values.replicas | default "1"}}
+  replicas: {{.Values.nginx.replicas | default "1"}}
   template:
     metadata:
       labels:
@@ -37,7 +37,7 @@ spec:
         - name: nginx-conf
           mountPath: /etc/nginx/conf.d
           readOnly: true
-        {{ if .Values.htpasswdSecretName }}
+        {{ if .Values.nginx.enableHtpasswdAuth }}
         - name: nginx-htpasswd
           mountPath: /etc/nginx/htpasswd
           readOnly: true
@@ -46,9 +46,9 @@ spec:
       - name: nginx-conf
         configMap:
           name: nginx-conf
-      {{ if .Values.htpasswdSecretName }}
+      {{ if .Values.nginx.enableHtpasswdAuth }}
       - name: nginx-htpasswd
         secret:
-          secretName: {{ .Values.htpasswdSecretName | quote }}
+          secretName: nginx-htpasswd
       {{ end }}
 {{ end }}

@@ -23,7 +23,7 @@ data:
           address = ":443"
             [entryPoints.https.tls]
 
-    {{ if .Values.acmeEmail }}
+    {{ if .Values.traefik.acmeEmail }}
     # let's encrypt automatic ssl certificate issue and renewal
     [acme]
       email = {{ .Values.acmeEmail | quote }}
