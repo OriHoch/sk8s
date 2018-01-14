@@ -1,4 +1,4 @@
-{{ if .Values.enabled }}
+{{ if .Values.traefik.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -26,27 +26,27 @@ data:
     {{ if .Values.traefik.acmeEmail }}
     # let's encrypt automatic ssl certificate issue and renewal
     [acme]
-      email = {{ .Values.acmeEmail | quote }}
+      email = {{ .Values.traefik.acmeEmail | quote }}
       {{ if .Values.traefik.dnsProvider }}
       dnsProvider = {{ .Values.traefik.dnsProvider | quote }}
       {{ end }}
       storage = "/traefic-acme/acme.json"
       entryPoint = "https"
       [[acme.domains]]
-        main = "{{ .Values.rootDomain }}"
+        main = "{{ .Values.traefik.rootDomain }}"
     {{ end }}
 
     [file]
     
     [backends]
-      {{ if .Values.enableNginx }}
+      {{ if .Values.traefik.enableNginx }}
       [backends.nginx]
         [backends.nginx.servers.server1]
           url = "http://nginx:80"
       {{ end }}
 
     [frontends]
-      {{ if .Values.enableNginx }}
+      {{ if .Values.traefik.enableNginx }}
       [frontends.default]
         backend="nginx"
         passHostHeader = true
