@@ -63,7 +63,12 @@ When deploying to the main, shared environments (e.g. `staging` / `production`),
 
 If you still want to deploy directly, just make sure you are the only one working on the environment and/or update with the master branch to prevent infrastructure conflicts.
 
-Make sure you have the latest helm installed on both client and server: `helm init --service-account tiller --upgrade`
+Make sure you have the latest helm installed on both client and server:
+
+```
+kubectl create -f https://raw.githubusercontent.com/OriHoch/sk8s/master/rbac-config.yaml
+helm init --service-account tiller --upgrade
+```
 
 Deploy:
 
