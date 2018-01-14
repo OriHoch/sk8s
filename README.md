@@ -169,14 +169,16 @@ External services / apps can be self-deploying using the above method for patchi
 The continuous deployment flow is based on:
 
 * Travis - runs the deployment script on each app's repo on commit to master branch (AKA merge of PR).
-* Ops Docker (see above) - provides a consistent deployment environment and to securely authenticate with the service account secret.
+* [Sk8s Ops](https://github.com/OriHoch/sk8s-ops/blob/master/README.md#sk8s-ops) - provides a consistent deployment environment and to securely authenticate with the service account secret.
 * GitHub - for persistency of deployment environment values - GitHub maintains the state of the environment. Each app commits deployment updates to the k8s repo.
 
 Install the [Travis CLI](https://github.com/travis-ci/travis.rb#installation)
 
 Enable Travis for the external repo (run `travis enable` from the repo directory)
 
-Copy `travis.yml` and related scripts from sk8s repo, some examples:
+Create a `travis.yml` and related scripts depending on your continuous deployment requirements
+
+You can copy from other projects:
 
 * Suitable for k8s repositories - it does deployment of charts and external sub-charts - https://github.com/Midburn/midburn-k8s/blob/master/.travis.yml
 * Suitable for external app repositories - it builds a docker image and updates image values - https://github.com/Midburn/spark/blob/master/.travis.yml
@@ -185,19 +187,17 @@ Copy `travis.yml` and related scripts from sk8s repo, some examples:
 
 Modify the values / script according to your app requirements
 
-Set the k8s ops service account secret on the app's travis
+Create a service account secret, see [Sk8s Ops - Creating a new service account with full permissions and related key file](https://github.com/OriHoch/sk8s-ops/blob/master/README.md#creating-a-new-service-account-with-full-permissions-and-related-key-file)
 
-assuming you have the secret-k8s-ops.json file available at the external app's root directory
+The service account secret should be encrypted for use by Travis
+
+Assuming you have the `secret-k8s-ops.json` file available at the external app's root directory:
 
 ```
 travis encrypt-file secret-k8s-ops.json secret-k8s-ops.json.enc
 ```
 
 Copy the `openssl` command output by the above command and modify in the .travis-yml
-
-The -out param should be `-out k8s-ops-secret.json`
-
-Check other sk8s apps for more deployment example, here is a continuous deployment which patches the deployment with help_update_values: https://github.com/OriHoch/sk8s-ops/blob/master/.travis.yml
 
 
 ## Authorize with GitHub to push changes
@@ -220,6 +220,13 @@ git clone git@github.com:midburn/midburn-k8s.git
 ```
 
 
-## Accessing internal cluster services
+## Accessing internal cluster services without a load balancer / external IP
 
 see https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/
+
+
+## Using Google Cloudbuild
+
+See example usage [here](https://github.com/orihoch/sk8s-pipelines)
+
+To expose google repo publically, follow [these steps](https://cloud.google.com/container-registry/docs/access-control#serving_images_publicly)
