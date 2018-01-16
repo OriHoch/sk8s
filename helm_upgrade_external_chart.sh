@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 
-usage() {
-    echo "Usage: ./helm_upgrade_external_chart.sh <EXTERNAL_CHART_NAME>"
-}
+source connect.sh
 
 CHART_NAME="${1}"
 
 [ -z "${CHART_NAME}" ] && usage && exit 1
 
-RELEASE_NAME="${CHART_NAME}-${K8S_ENVIRONMENT_NAME}"
+RELEASE_NAME="${K8S_HELM_RELEASE_NAME}-${CHART_NAME}-${K8S_ENVIRONMENT_NAME}"
 EXTERNAL_CHARTS_DIRECTORY="charts-external"
 CHART_DIRECTORY="${EXTERNAL_CHARTS_DIRECTORY}/${CHART_NAME}"
-
-source connect.sh
 
 echo "RELEASE_NAME=${RELEASE_NAME}"
 echo "CHART_DIRECTORY=${CHART_DIRECTORY}"
@@ -39,7 +35,7 @@ VALUES=`cat "${TEMPDIR}/values.yaml"`
 
 if [ `./read_yaml.py "${TEMPDIR}/values.yaml" enabled` == "true" ]; then
     CMD="helm upgrade -f ${TEMPDIR}/values.yaml ${RELEASE_NAME} ${CHART_DIRECTORY} ${@:2}"
-    if ! helm upgrade -f "${TEMPDIR}/values.yaml" "${RELEASE_NAME}" "${CHART_DIRECTORY}" "${@:2}"; then
+    if ! $CMD; then
         echo
         echo "${TEMPDIR}/values.yaml"
         echo "${VALUES}"
