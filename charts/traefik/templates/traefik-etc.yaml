@@ -7,21 +7,23 @@ data:
   traefik.toml: |
     # https://docs.traefik.io/configuration/commons/
 
-    {{ if .Values.global.debug }}
-    debug = true
-    {{ end }}
+    debug = false
 
     defaultEntryPoints = ["http", "https"]
     
     [entryPoints]
         [entryPoints.http]
           address = ":80"
+          {{ if .Values.traefik.acmeEmail }}
             [entryPoints.http.redirect]
               entryPoint = "https"
-        
+          {{ end }}
+
+        {{ if .Values.traefik.acmeEmail }}
         [entryPoints.https]
           address = ":443"
             [entryPoints.https.tls]
+        {{ end }}
 
     {{ if .Values.traefik.acmeEmail }}
     # let's encrypt automatic ssl certificate issue and renewal
@@ -30,26 +32,67 @@ data:
       {{ if .Values.traefik.dnsProvider }}
       dnsProvider = {{ .Values.traefik.dnsProvider | quote }}
       {{ end }}
-      storage = "/traefic-acme/acme.json"
+      storage = "/traefik-acme/acme.json"
       entryPoint = "https"
-      [[acme.domains]]
-        main = "{{ .Values.traefik.rootDomain }}"
+{{ .Values.traefik.acmeDomains | indent 6 }}
     {{ end }}
 
     [file]
     
     [backends]
-      {{ if .Values.traefik.enableNginx }}
+      {{ if .Values.nginx.enabled }}
       [backends.nginx]
         [backends.nginx.servers.server1]
           url = "http://nginx:80"
       {{ end }}
 
+      {{ if .Values.spark.enabled }}
+      [backends.spark]
+        [backends.spark.servers.server1]
+          url = "http://spark:3000"
+      {{ end }}
+
+      {{ if .Values.volunteers.enabled }}
+      [backends.volunteers]
+        [backends.volunteers.servers.server1]
+          url = "http://volunteers:8000"
+      {{ end }}
+
+      {{ if .Values.profiles.enabled }}
+      [backends.profiles]
+        [backends.profiles.servers.server1]
+          url = "http://profiles-drupal"
+      {{ end }}
+
     [frontends]
-      {{ if .Values.traefik.enableNginx }}
+      {{ if .Values.nginx.enabled }}
       [frontends.default]
         backend="nginx"
         passHostHeader = true
+      {{ end }}
+
+      {{ if .Values.spark.enabled }}
+      [frontends.spark]
+        backend="spark"
+        passHostHeader = true
+          [frontends.spark.routes.route1]
+            rule = "{{ .Values.traefik.sparkHostsRule }}"
+      {{ end }}
+
+      {{ if .Values.volunteers.enabled }}
+      [frontends.volunteers]
+        backend="volunteers"
+        passHostHeader = true
+          [frontends.volunteers.routes.route1]
+            rule = "{{ .Values.traefik.volunteersHostsRule }}"
+      {{ end }}
+
+      {{ if .Values.profiles.enabled }}
+      [frontends.profiles]
+        backend="profiles"
+        passHostHeader = true
+          [frontends.profiles.routes.route1]
+            rule = "{{ .Values.traefik.profilesHostsRule }}"
       {{ end }}
 
 {{ end }}
