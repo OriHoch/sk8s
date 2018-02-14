@@ -1,2 +1,2 @@
 sk8s-ops:
-  image: gcr.io/uumpa123/sk8s-ops:095cc4dcf46eda6007e505a9091779c52cff18c1
+  image: gcr.io/uumpa123/sk8s-ops:55dc57f1616b4b7fe5ff24f384667c652fff0af7
